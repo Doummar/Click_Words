@@ -1,0 +1,312 @@
+<div class="click-words" id="cw-root">
+  {{#Front Audio}}
+  <div class="cw-audio-bar" data-pos="top-right">
+    {{Front Audio}}
+  </div>
+  {{/Front Audio}}
+
+  {{#ExerciseType}}
+  <div class="cw-exercise-type">{{ExerciseType}}</div>
+  {{/ExerciseType}}
+
+  {{#Instruction}}
+  <div class="cw-instruction">{{Instruction}}</div>
+  {{/Instruction}}
+  {{^Instruction}}
+  {{#Question}}
+  <div class="cw-instruction">{{Question}}</div>
+  {{/Question}}
+  {{/Instruction}}
+
+  <div class="cw-passage" id="cw-passage">{{Passage}}</div>
+
+  <div class="cw-footer">
+    <div class="cw-counter" id="cw-counter" aria-live="polite">0/N found</div>
+    <div class="cw-actions">
+      <button type="button" class="cw-btn cw-btn-reset" id="cw-btn-reset" title="Clear your selections">
+        <svg class="cw-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span>Reset</span>
+      </button>
+      <button type="button" class="cw-btn cw-btn-check" id="cw-btn-check">Check</button>
+    </div>
+  </div>
+
+  <div id="cw-target-data" class="cw-hidden" aria-hidden="true">{{TargetWords}}</div>
+</div>
+
+<script>
+(function() {
+  var root = document.getElementById('cw-root');
+  if (!root) return;
+
+  var passageEl = document.getElementById('cw-passage');
+  var targetDataEl = document.getElementById('cw-target-data');
+  var counterEl = document.getElementById('cw-counter');
+  var checkBtn = document.getElementById('cw-btn-check');
+  var resetBtn = document.getElementById('cw-btn-reset');
+
+  if (!passageEl || !targetDataEl) return;
+
+  // 1. Parse target words (pipe-separated, trimmed, preserve duplicates)
+  var rawTargetStr = (targetDataEl.textContent || '').trim();
+  var rawTargets = rawTargetStr.split('|').map(function(s) {
+    return s.trim();
+  }).filter(function(s) {
+    return s.length > 0;
+  });
+
+  var targetDefs = rawTargets.map(function(raw, idx) {
+    return {
+      id: idx,
+      raw: raw,
+      words: raw.split(/\s+/).filter(Boolean),
+      matched: false
+    };
+  });
+
+  var totalTargets = targetDefs.length;
+  var tokens = [];
+  var isEvaluated = false;
+
+  function updateCounter(status) {
+    if (!counterEl) return;
+    if (status === 'checked') {
+      var correct = 0;
+      var incorrect = 0;
+      for (var j = 0; j < tokens.length; j++) {
+        if (tokens[j].isSelected && tokens[j].isTarget) correct++;
+        if (tokens[j].isSelected && !tokens[j].isTarget) incorrect++;
+      }
+      var text = correct + '/' + totalTargets + ' found';
+      if (incorrect > 0) {
+        text += ' (' + incorrect + ' incorrect)';
+      }
+      counterEl.textContent = text;
+    } else {
+      var selCount = 0;
+      for (var j = 0; j < tokens.length; j++) {
+        if (tokens[j].isSelected) selCount++;
+      }
+      counterEl.textContent = selCount + '/' + totalTargets + ' found';
+    }
+  }
+
+  // 2. Tokenize passage DOM text nodes into accessible buttons
+  // Punctuation is kept outside or around tokens; apostrophes inside words preserved
+  var WORD_REGEX = /([\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*)/gu;
+
+  function collectTextNodes(node) {
+    var textNodes = [];
+    var walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+    var current;
+    while (current = walker.nextNode()) {
+      if (current.nodeValue && current.nodeValue.trim().length > 0) {
+        textNodes.push(current);
+      }
+    }
+    return textNodes;
+  }
+
+  var textNodes = collectTextNodes(passageEl);
+  var tokenIndex = 0;
+
+  for (var n = 0; n < textNodes.length; n++) {
+    var tn = textNodes[n];
+    var text = tn.nodeValue;
+    var matches = [];
+    var match;
+    WORD_REGEX.lastIndex = 0;
+
+    while ((match = WORD_REGEX.exec(text)) !== null) {
+      matches.push({
+        word: match[1],
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+
+    if (matches.length === 0) continue;
+
+    var fragment = document.createDocumentFragment();
+    var lastIdx = 0;
+
+    for (var m = 0; m < matches.length; m++) {
+      var item = matches[m];
+      if (item.start > lastIdx) {
+        fragment.appendChild(document.createTextNode(text.substring(lastIdx, item.start)));
+      }
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cw-word';
+      btn.textContent = item.word;
+      btn.setAttribute('data-cw-idx', String(tokenIndex));
+      btn.setAttribute('aria-pressed', 'false');
+
+      var tokenObj = {
+        index: tokenIndex,
+        word: item.word,
+        el: btn,
+        isSelected: false,
+        isTarget: false,
+        targetId: null
+      };
+
+      tokens.push(tokenObj);
+      tokenIndex++;
+
+      fragment.appendChild(btn);
+      lastIdx = item.end;
+    }
+
+    if (lastIdx < text.length) {
+      fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+    }
+
+    if (tn.parentNode) {
+      tn.parentNode.replaceChild(fragment, tn);
+    }
+  }
+
+  // 3. Match targets against tokens in passage order (case-sensitive, handle duplicates & multi-word)
+  for (var i = 0; i < tokens.length; i++) {
+    if (tokens[i].targetId !== null) continue;
+
+    for (var t = 0; t < targetDefs.length; t++) {
+      var tgt = targetDefs[t];
+      if (tgt.matched) continue;
+
+      var tWords = tgt.words;
+      if (i + tWords.length > tokens.length) continue;
+
+      var matchAll = true;
+      for (var k = 0; k < tWords.length; k++) {
+        if (tokens[i + k].word !== tWords[k]) {
+          matchAll = false;
+          break;
+        }
+      }
+
+      if (matchAll) {
+        tgt.matched = true;
+        for (var k = 0; k < tWords.length; k++) {
+          tokens[i + k].isTarget = true;
+          tokens[i + k].targetId = tgt.id;
+        }
+        break;
+      }
+    }
+  }
+
+  updateCounter('init');
+
+  function getCardHash() {
+    var str = (passageEl.textContent || '') + ':::' + (targetDataEl.textContent || '');
+    var h = 0;
+    for (var i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return 'cw_' + Math.abs(h);
+  }
+
+  function saveAttempt(isChecked) {
+    try {
+      var selectedIndices = [];
+      var selectedWords = [];
+      var correct = 0;
+      var incorrect = 0;
+      for (var i = 0; i < tokens.length; i++) {
+        if (tokens[i].isSelected) {
+          selectedIndices.push(i);
+          selectedWords.push(tokens[i].word);
+          if (tokens[i].isTarget) correct++;
+          else incorrect++;
+        }
+      }
+      var missed = Math.max(0, totalTargets - correct);
+      var snapshot = {
+        cardHash: getCardHash(),
+        selectedIndices: selectedIndices,
+        selectedWords: selectedWords,
+        isChecked: !!isChecked,
+        correct: correct,
+        incorrect: incorrect,
+        missed: missed,
+        total: totalTargets,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('cw_attempt', JSON.stringify(snapshot));
+    } catch (err) {}
+  }
+
+  // 4. Token click handler
+  passageEl.addEventListener('click', function(e) {
+    var target = e.target;
+    if (!target || !target.classList.contains('cw-word')) return;
+
+    var idx = parseInt(target.getAttribute('data-cw-idx'), 10);
+    if (isNaN(idx) || !tokens[idx]) return;
+
+    var tok = tokens[idx];
+    tok.isSelected = !tok.isSelected;
+    tok.el.classList.toggle('is-selected', tok.isSelected);
+    tok.el.setAttribute('aria-pressed', tok.isSelected ? 'true' : 'false');
+
+    // If card was evaluated, clear feedback classes on modification
+    if (isEvaluated) {
+      isEvaluated = false;
+      for (var c = 0; c < tokens.length; c++) {
+        tokens[c].el.classList.remove('is-correct', 'is-incorrect', 'is-missed');
+      }
+    }
+
+    saveAttempt(false);
+    updateCounter('selecting');
+  });
+
+  // 5. Check button evaluation
+  if (checkBtn) {
+    checkBtn.addEventListener('click', function() {
+      var correctCount = 0;
+      var incorrectCount = 0;
+
+      for (var i = 0; i < tokens.length; i++) {
+        var tok = tokens[i];
+        tok.el.classList.remove('is-correct', 'is-incorrect', 'is-missed');
+
+        if (tok.isSelected && tok.isTarget) {
+          tok.el.classList.add('is-correct');
+          correctCount++;
+        } else if (tok.isSelected && !tok.isTarget) {
+          tok.el.classList.add('is-incorrect');
+          incorrectCount++;
+        } else if (!tok.isSelected && tok.isTarget) {
+          tok.el.classList.add('is-missed');
+        }
+      }
+
+      isEvaluated = true;
+      saveAttempt(true);
+      updateCounter('checked');
+    });
+  }
+
+  // 6. Reset button
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+      isEvaluated = false;
+      for (var i = 0; i < tokens.length; i++) {
+        var tok = tokens[i];
+        tok.isSelected = false;
+        tok.el.classList.remove('is-selected', 'is-correct', 'is-incorrect', 'is-missed');
+        tok.el.setAttribute('aria-pressed', 'false');
+      }
+      try {
+        sessionStorage.removeItem('cw_attempt');
+      } catch (err) {}
+      updateCounter('init');
+    });
+  }
+})();
+</script>

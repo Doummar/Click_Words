@@ -1,0 +1,688 @@
+/* ==========================================================================
+   Click Words — Card Styling
+   Scope: ALL rules MUST start with .click-words or .nightMode .click-words
+   No bare body, html, #qa, .card, .replay-button selectors.
+   ========================================================================== */
+
+.click-words {
+  --cw-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cw-font-size: 18px;
+  --cw-line-height: 1.65;
+  --cw-text-main: #1f2937;
+  --cw-text-muted: #6b7280;
+  --cw-bg-box: #f9fafb;
+  --cw-border-subtle: #e5e7eb;
+  --cw-primary: #2563eb;
+  --cw-primary-hover: #1d4ed8;
+  --cw-primary-focus: rgba(37, 99, 235, 0.2);
+
+  /* Feedback Colors (Quiet, Minimal Underlines) */
+  --cw-correct-border: #16a34a;
+  --cw-incorrect-border: #dc2626;
+  --cw-missed-border: #16a34a;
+  --cw-target-border: #475569;
+
+  /* Card Layout */
+  box-sizing: border-box;
+  font-family: var(--cw-font-family);
+  font-size: var(--cw-font-size);
+  line-height: var(--cw-line-height);
+  color: var(--cw-text-main);
+  width: 100%;
+  max-width: 740px;
+  padding: 16px 20px;
+  text-align: left;
+}
+
+/* Night Mode Overrides */
+.nightMode .click-words,
+body.nightMode .click-words {
+  --cw-text-main: #f3f4f6;
+  --cw-text-muted: #9ca3af;
+  --cw-bg-box: #1f2937;
+  --cw-border-subtle: #374151;
+  --cw-primary: #3b82f6;
+  --cw-primary-hover: #60a5fa;
+  --cw-primary-focus: rgba(59, 130, 246, 0.3);
+
+  --cw-correct-border: #4ade80;
+  --cw-incorrect-border: #f87171;
+  --cw-missed-border: #4ade80;
+  --cw-target-border: #94a3b8;
+}
+
+/* Horizontal & Vertical Alignment (Scoped to .click-words only) */
+.click-words,
+.click-words[data-align-h="center"] {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.click-words[data-align-h="left"] {
+  margin-left: 20px !important;
+  margin-right: auto !important;
+}
+.click-words[data-align-h="right"] {
+  margin-left: auto !important;
+  margin-right: 20px !important;
+}
+
+.click-words,
+.click-words[data-align-v="top"] {
+  margin-top: 16px !important;
+  margin-bottom: auto !important;
+}
+.click-words[data-align-v="center"] {
+  /* Center in reviewer viewport without scrollbars */
+  margin-top: clamp(16px, calc(50vh - 200px), 38vh) !important;
+  margin-bottom: auto !important;
+}
+.click-words[data-align-v="bottom"] {
+  margin-top: clamp(24px, calc(100vh - 420px), 60vh) !important;
+  margin-bottom: auto !important;
+}
+
+/* Hidden elements */
+.click-words .cw-hidden {
+  display: none !important;
+}
+
+/* Audio Bar (Dedicated fixed corner position) */
+.click-words .cw-audio-bar,
+.click-words .cw-audio-row {
+  position: fixed;
+  z-index: 100;
+  /* default top-right */
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.click-words[data-controls-pos="top-left"] .cw-audio-bar,
+.click-words[data-controls-pos="top-left"] .cw-audio-row {
+  top: 14px;
+  left: 14px;
+  right: auto;
+  bottom: auto;
+}
+
+.click-words[data-controls-pos="top-right"] .cw-audio-bar,
+.click-words[data-controls-pos="top-right"] .cw-audio-row {
+  top: 14px;
+  right: 14px;
+  left: auto;
+  bottom: auto;
+}
+
+.click-words[data-controls-pos="bottom-right"] .cw-audio-bar,
+.click-words[data-controls-pos="bottom-right"] .cw-audio-row {
+  bottom: 14px;
+  top: auto;
+  right: 14px;
+  left: auto;
+}
+
+.click-words[data-controls-pos="bottom-left"] .cw-audio-bar,
+.click-words[data-controls-pos="bottom-left"] .cw-audio-row {
+  bottom: 14px;
+  top: auto;
+  left: 14px;
+  right: auto;
+}
+
+/* Exercise Type Label (Metadata label, subtle) */
+.click-words .cw-exercise-type {
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cw-text-muted);
+  margin-bottom: 6px;
+}
+
+/* Instruction Prompt */
+.click-words .cw-instruction {
+  display: block;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--cw-text-main);
+  margin-bottom: 16px;
+  line-height: 1.45;
+}
+
+/* Passage Container */
+.click-words .cw-passage {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  font-size: 1em;
+  line-height: var(--cw-line-height);
+  color: var(--cw-text-main);
+  margin-bottom: 24px;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* Interactive Word Button */
+.click-words .cw-word {
+  display: inline;
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  cursor: default;
+  outline: none;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: baseline;
+  box-sizing: border-box;
+}
+
+/* Tactile Pressed (:active) Feedback */
+.click-words .cw-word:active {
+  transform: scale(0.96);
+}
+
+/* Ensure entire passage reading surface maintains a single stable default cursor */
+.click-words .cw-word * {
+  cursor: default;
+}
+
+/* ==============================================================================
+   Word States & Styles (Plain / Outline / Pills)
+   ============================================================================== */
+
+/* Word Style 1: Plain (Underline-based on click only, zero boxes, zero hover noise) */
+.click-words[data-word-style="plain"] .cw-word,
+.click-words:not([data-word-style]) .cw-word {
+  display: inline;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+}
+.click-words[data-word-style="plain"] .cw-word:hover,
+.click-words:not([data-word-style]) .cw-word:hover {
+  background: transparent;
+  border: none;
+  text-decoration: none;
+}
+.click-words[data-word-style="plain"] .cw-word.is-selected,
+.click-words:not([data-word-style]) .cw-word.is-selected {
+  color: inherit;
+  background: transparent;
+  border: none;
+  text-decoration: underline !important;
+  text-decoration-color: var(--cw-text-muted) !important;
+  text-decoration-style: solid !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 0.2em !important;
+}
+.click-words[data-word-style="plain"] .cw-word.is-correct,
+.click-words:not([data-word-style]) .cw-word.is-correct {
+  color: inherit;
+  background: transparent;
+  border: none;
+  text-decoration: underline !important;
+  text-decoration-color: var(--cw-correct-border) !important;
+  text-decoration-style: solid !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 0.2em !important;
+}
+.click-words[data-word-style="plain"] .cw-word.is-incorrect,
+.click-words:not([data-word-style]) .cw-word.is-incorrect {
+  color: inherit;
+  background: transparent;
+  border: none;
+  text-decoration: underline !important;
+  text-decoration-color: var(--cw-incorrect-border) !important;
+  text-decoration-style: solid !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 0.2em !important;
+}
+.click-words[data-word-style="plain"] .cw-word.is-missed,
+.click-words:not([data-word-style]) .cw-word.is-missed {
+  color: inherit;
+  background: transparent;
+  border: none;
+  text-decoration: underline !important;
+  text-decoration-color: var(--cw-missed-border) !important;
+  text-decoration-style: dashed !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 0.2em !important;
+}
+.click-words[data-word-style="plain"] .cw-word.is-target,
+.click-words:not([data-word-style]) .cw-word.is-target {
+  color: inherit;
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+/* ==============================================================================
+   Word Style 2: Outline (Outlined tag, 100% transparent background)
+   - Rectangular rounded tag corners (border-radius 6px)
+   - Visible 1.5px border
+   - ZERO fill color in ANY state (transparent background)
+   - Zero font-weight expansion (no text reflow / jitter)
+   ============================================================================== */
+.click-words[data-word-style="outline"] .cw-word {
+  display: inline-block;
+  vertical-align: baseline;
+  background: transparent !important;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  padding: 0 5px;
+  margin: 0 1px;
+  color: inherit;
+  text-decoration: none !important;
+  box-sizing: border-box;
+}
+.click-words[data-word-style="outline"] .cw-word:hover {
+  border-color: var(--cw-border-subtle);
+  background: transparent !important;
+  text-decoration: none !important;
+}
+.click-words[data-word-style="outline"] .cw-word.is-selected {
+  color: inherit;
+  background: transparent !important;
+  border: 1.5px solid var(--cw-text-muted);
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="outline"] .cw-word.is-selected,
+body.nightMode .click-words[data-word-style="outline"] .cw-word.is-selected {
+  background: transparent !important;
+  border-color: var(--cw-text-muted);
+}
+.click-words[data-word-style="outline"] .cw-word.is-correct {
+  color: inherit;
+  background: transparent !important;
+  border: 1.5px solid var(--cw-correct-border);
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="outline"] .cw-word.is-correct,
+body.nightMode .click-words[data-word-style="outline"] .cw-word.is-correct {
+  background: transparent !important;
+  border-color: var(--cw-correct-border);
+}
+.click-words[data-word-style="outline"] .cw-word.is-incorrect {
+  color: inherit;
+  background: transparent !important;
+  border: 1.5px solid var(--cw-incorrect-border);
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="outline"] .cw-word.is-incorrect,
+body.nightMode .click-words[data-word-style="outline"] .cw-word.is-incorrect {
+  background: transparent !important;
+  border-color: var(--cw-incorrect-border);
+}
+.click-words[data-word-style="outline"] .cw-word.is-missed {
+  color: inherit;
+  background: transparent !important;
+  border: 1.5px dashed var(--cw-missed-border);
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="outline"] .cw-word.is-missed,
+body.nightMode .click-words[data-word-style="outline"] .cw-word.is-missed {
+  background: transparent !important;
+  border-color: var(--cw-missed-border);
+}
+.click-words[data-word-style="outline"] .cw-word.is-target {
+  color: inherit;
+  background: transparent !important;
+  border: 1.5px solid var(--cw-target-border);
+  border-radius: 6px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="outline"] .cw-word.is-target,
+body.nightMode .click-words[data-word-style="outline"] .cw-word.is-target {
+  background: transparent !important;
+  border-color: var(--cw-target-border);
+}
+
+/* ==============================================================================
+   Word Style 3: Pills (Soft filled chip appearance)
+   - Pill capsule shape (border-radius 9999px)
+   - Clearly visible fill color + matching border on marked words
+   - Unselected words remain clean passage text
+   - Zero font-weight expansion (no text reflow / jitter)
+   ============================================================================== */
+.click-words[data-word-style="pills"] .cw-word {
+  display: inline-block;
+  vertical-align: baseline;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 9999px;
+  padding: 0 7px;
+  margin: 0 1px;
+  color: inherit;
+  text-decoration: none !important;
+  box-sizing: border-box;
+}
+.click-words[data-word-style="pills"] .cw-word:hover {
+  border-color: var(--cw-border-subtle);
+  background-color: rgba(0, 0, 0, 0.05);
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word:hover,
+body.nightMode .click-words[data-word-style="pills"] .cw-word:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.click-words[data-word-style="pills"] .cw-word.is-selected {
+  color: inherit;
+  background-color: rgba(100, 116, 139, 0.22);
+  border: 1.5px solid var(--cw-text-muted);
+  border-radius: 9999px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word.is-selected,
+body.nightMode .click-words[data-word-style="pills"] .cw-word.is-selected {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-color: var(--cw-text-muted);
+}
+.click-words[data-word-style="pills"] .cw-word.is-correct {
+  color: inherit;
+  background-color: rgba(22, 163, 74, 0.20);
+  border: 1.5px solid var(--cw-correct-border);
+  border-radius: 9999px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word.is-correct,
+body.nightMode .click-words[data-word-style="pills"] .cw-word.is-correct {
+  background-color: rgba(74, 222, 128, 0.26);
+  border-color: var(--cw-correct-border);
+}
+.click-words[data-word-style="pills"] .cw-word.is-incorrect {
+  color: inherit;
+  background-color: rgba(220, 38, 38, 0.20);
+  border: 1.5px solid var(--cw-incorrect-border);
+  border-radius: 9999px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word.is-incorrect,
+body.nightMode .click-words[data-word-style="pills"] .cw-word.is-incorrect {
+  background-color: rgba(248, 113, 113, 0.26);
+  border-color: var(--cw-incorrect-border);
+}
+.click-words[data-word-style="pills"] .cw-word.is-missed {
+  color: inherit;
+  background-color: rgba(22, 163, 74, 0.12);
+  border: 1.5px dashed var(--cw-missed-border);
+  border-radius: 9999px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word.is-missed,
+body.nightMode .click-words[data-word-style="pills"] .cw-word.is-missed {
+  background-color: rgba(74, 222, 128, 0.16);
+  border-color: var(--cw-missed-border);
+}
+.click-words[data-word-style="pills"] .cw-word.is-target {
+  color: inherit;
+  background-color: rgba(22, 163, 74, 0.20);
+  border: 1.5px solid var(--cw-target-border);
+  border-radius: 9999px;
+  text-decoration: none !important;
+}
+.nightMode .click-words[data-word-style="pills"] .cw-word.is-target,
+body.nightMode .click-words[data-word-style="pills"] .cw-word.is-target {
+  background-color: rgba(74, 222, 128, 0.26);
+  border-color: var(--cw-target-border);
+}
+
+/* Ensure no text-decoration underlines on any outline or pill token */
+.click-words[data-word-style="outline"] .cw-word,
+.click-words[data-word-style="outline"] .cw-word.is-selected,
+.click-words[data-word-style="outline"] .cw-word.is-correct,
+.click-words[data-word-style="outline"] .cw-word.is-incorrect,
+.click-words[data-word-style="outline"] .cw-word.is-missed,
+.click-words[data-word-style="outline"] .cw-word.is-target,
+.click-words[data-word-style="pills"] .cw-word,
+.click-words[data-word-style="pills"] .cw-word.is-selected,
+.click-words[data-word-style="pills"] .cw-word.is-correct,
+.click-words[data-word-style="pills"] .cw-word.is-incorrect,
+.click-words[data-word-style="pills"] .cw-word.is-missed,
+.click-words[data-word-style="pills"] .cw-word.is-target {
+  text-decoration: none !important;
+}
+
+/* Back Side Static Target / Answer Key fallback */
+.click-words .cw-word-static {
+  cursor: default !important;
+}
+.click-words .cw-word-static * {
+  cursor: default !important;
+}
+.click-words .cw-word-static:hover {
+  background: transparent;
+  outline: none;
+  text-decoration: none;
+}
+
+/* Footer Control Row */
+.click-words .cw-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cw-border-subtle);
+}
+
+/* Progress Counter */
+.click-words .cw-counter {
+  flex: 0 1 auto;
+  text-align: left;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--cw-text-muted);
+  user-select: none;
+}
+
+/* Action Buttons Container */
+.click-words .cw-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.click-words .cw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  line-height: 1.2;
+}
+
+.click-words .cw-btn-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.click-words .cw-btn:focus-visible {
+  outline: 2px solid var(--cw-primary);
+  outline-offset: 2px;
+}
+
+/* Check Button */
+.click-words .cw-btn-check {
+  background-color: var(--cw-primary);
+  color: #ffffff;
+  border-color: var(--cw-primary);
+}
+.click-words .cw-btn-check:hover {
+  background-color: var(--cw-primary-hover);
+  border-color: var(--cw-primary-hover);
+}
+
+/* Reset Button */
+.click-words .cw-btn-reset {
+  background-color: transparent;
+  color: var(--cw-text-muted);
+  border-color: var(--cw-border-subtle);
+}
+.click-words .cw-btn-reset:hover {
+  background-color: var(--cw-bg-box);
+  color: var(--cw-text-main);
+}
+
+/* Back Side Attempt Summary Box (Quiet & Minimal) */
+.click-words .cw-attempt-box {
+  margin: 14px 0;
+}
+
+.click-words .cw-summary-card {
+  background-color: var(--cw-bg-box);
+  border: 1px solid var(--cw-border-subtle);
+  border-radius: 6px;
+  padding: 9px 13px;
+}
+
+.click-words .cw-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.click-words .cw-summary-title {
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--cw-text-main);
+}
+
+.click-words .cw-summary-score {
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--cw-text-muted);
+}
+
+.click-words .cw-summary-text {
+  font-size: 0.82em;
+  color: var(--cw-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.click-words .cw-stat-dot {
+  opacity: 0.4;
+}
+
+.click-words .cw-stat-correct {
+  color: var(--cw-correct-border);
+  font-weight: 500;
+}
+
+.click-words .cw-stat-incorrect {
+  color: var(--cw-incorrect-border);
+  font-weight: 500;
+}
+
+.click-words .cw-stat-missed {
+  color: var(--cw-missed-border);
+  font-weight: 500;
+}
+
+/* Backward compatibility for chips if used */
+.click-words .cw-summary-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.click-words .cw-chip {
+  font-size: 0.8em;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.click-words .cw-chip-correct {
+  color: var(--cw-correct-border);
+  border: 1px solid var(--cw-correct-border);
+}
+
+.click-words .cw-chip-incorrect {
+  color: var(--cw-incorrect-border);
+  border: 1px solid var(--cw-incorrect-border);
+}
+
+.click-words .cw-chip-missed {
+  color: var(--cw-missed-border);
+  border: 1px dashed var(--cw-missed-border);
+}
+
+/* Back Side Explanation */
+.click-words .cw-explanation {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background-color: var(--cw-bg-box);
+  border-left: 3px solid var(--cw-primary);
+  border-radius: 0 6px 6px 0;
+}
+
+.click-words .cw-section-title {
+  font-size: 0.8em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cw-text-muted);
+  margin-bottom: 4px;
+}
+
+.click-words .cw-explanation-body {
+  font-size: 0.95em;
+  color: var(--cw-text-main);
+  line-height: 1.5;
+}
+
+/* Meta & Extra */
+.click-words .cw-meta-row {
+  margin-top: 14px;
+  font-size: 0.8em;
+  color: var(--cw-text-muted);
+}
+.click-words .cw-meta-label {
+  font-weight: 600;
+}
+.click-words .cw-extra-row {
+  margin-top: 8px;
+  font-size: 0.85em;
+  color: var(--cw-text-muted);
+}

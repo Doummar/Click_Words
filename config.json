@@ -1,0 +1,11 @@
+{
+  "word_style": "plain",
+  "font_family": "",
+  "font_size": 18,
+  "card_vertical": "top",
+  "card_horizontal": "center",
+  "controls_pos": "top-right",
+  "show_counter": true,
+  "show_check_button": true,
+  "show_attempt_summary": true
+}

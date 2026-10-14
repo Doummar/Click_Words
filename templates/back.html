@@ -1,0 +1,264 @@
+<div class="click-words" id="cw-root-back">
+  {{#Back Audio}}
+  <div class="cw-audio-bar" data-pos="top-right">
+    {{Back Audio}}
+  </div>
+  {{/Back Audio}}
+
+  {{#ExerciseType}}
+  <div class="cw-exercise-type">{{ExerciseType}}</div>
+  {{/ExerciseType}}
+
+  {{#Instruction}}
+  <div class="cw-instruction">{{Instruction}}</div>
+  {{/Instruction}}
+  {{^Instruction}}
+  {{#Question}}
+  <div class="cw-instruction">{{Question}}</div>
+  {{/Question}}
+  {{/Instruction}}
+
+  <div class="cw-passage cw-passage-back" id="cw-passage-back">{{Passage}}</div>
+
+  <div id="cw-attempt-box" class="cw-attempt-box" style="display:none;" aria-live="polite"></div>
+
+  {{#Explanation}}
+  <div class="cw-explanation">
+    <div class="cw-section-title">Explanation</div>
+    <div class="cw-explanation-body">{{Explanation}}</div>
+  </div>
+  {{/Explanation}}
+
+  {{#Source}}
+  <div class="cw-meta-row">
+    <span class="cw-meta-label">Source:</span> <span class="cw-meta-val">{{Source}}</span>
+  </div>
+  {{/Source}}
+
+  {{#Extra}}
+  <div class="cw-extra-row">{{Extra}}</div>
+  {{/Extra}}
+
+  <div id="cw-target-data-back" class="cw-hidden" aria-hidden="true">{{TargetWords}}</div>
+</div>
+
+<script>
+(function() {
+  var root = document.getElementById('cw-root-back');
+  if (!root) return;
+
+  var passageEl = document.getElementById('cw-passage-back');
+  var targetDataEl = document.getElementById('cw-target-data-back');
+  var attemptBox = document.getElementById('cw-attempt-box');
+
+  if (!passageEl || !targetDataEl) return;
+
+  // 1. Parse target words (pipe-separated, trimmed, duplicate-safe)
+  var rawTargetStr = (targetDataEl.textContent || '').trim();
+  var rawTargets = rawTargetStr.split('|').map(function(s) {
+    return s.trim();
+  }).filter(function(s) {
+    return s.length > 0;
+  });
+
+  var targetDefs = rawTargets.map(function(raw, idx) {
+    return {
+      id: idx,
+      raw: raw,
+      words: raw.split(/\s+/).filter(Boolean),
+      matched: false
+    };
+  });
+
+  // 2. Tokenize passage DOM text nodes
+  var WORD_REGEX = /([\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*)/gu;
+  var tokens = [];
+
+  function collectTextNodes(node) {
+    var textNodes = [];
+    var walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+    var current;
+    while (current = walker.nextNode()) {
+      if (current.nodeValue && current.nodeValue.trim().length > 0) {
+        textNodes.push(current);
+      }
+    }
+    return textNodes;
+  }
+
+  var textNodes = collectTextNodes(passageEl);
+  var tokenIndex = 0;
+
+  for (var n = 0; n < textNodes.length; n++) {
+    var tn = textNodes[n];
+    var text = tn.nodeValue;
+    var matches = [];
+    var match;
+    WORD_REGEX.lastIndex = 0;
+
+    while ((match = WORD_REGEX.exec(text)) !== null) {
+      matches.push({
+        word: match[1],
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
+
+    if (matches.length === 0) continue;
+
+    var fragment = document.createDocumentFragment();
+    var lastIdx = 0;
+
+    for (var m = 0; m < matches.length; m++) {
+      var item = matches[m];
+      if (item.start > lastIdx) {
+        fragment.appendChild(document.createTextNode(text.substring(lastIdx, item.start)));
+      }
+
+      var span = document.createElement('span');
+      span.className = 'cw-word cw-word-static';
+      span.textContent = item.word;
+
+      var tokenObj = {
+        index: tokenIndex,
+        word: item.word,
+        el: span,
+        isTarget: false,
+        targetId: null
+      };
+
+      tokens.push(tokenObj);
+      tokenIndex++;
+
+      fragment.appendChild(span);
+      lastIdx = item.end;
+    }
+
+    if (lastIdx < text.length) {
+      fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+    }
+
+    if (tn.parentNode) {
+      tn.parentNode.replaceChild(fragment, tn);
+    }
+  }
+
+  // 3. Match targets against tokens in passage order (case-sensitive)
+  for (var i = 0; i < tokens.length; i++) {
+    if (tokens[i].targetId !== null) continue;
+
+    for (var t = 0; t < targetDefs.length; t++) {
+      var tgt = targetDefs[t];
+      if (tgt.matched) continue;
+
+      var tWords = tgt.words;
+      if (i + tWords.length > tokens.length) continue;
+
+      var matchAll = true;
+      for (var k = 0; k < tWords.length; k++) {
+        if (tokens[i + k].word !== tWords[k]) {
+          matchAll = false;
+          break;
+        }
+      }
+
+      if (matchAll) {
+        tgt.matched = true;
+        for (var k = 0; k < tWords.length; k++) {
+          tokens[i + k].isTarget = true;
+          tokens[i + k].targetId = tgt.id;
+        }
+        break;
+      }
+    }
+  }
+
+  function getCardHash() {
+    var str = (passageEl.textContent || '') + ':::' + (targetDataEl.textContent || '');
+    var h = 0;
+    for (var i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return 'cw_' + Math.abs(h);
+  }
+
+  // 4. Check for user attempt snapshot from front side
+  var attemptSnapshot = null;
+  try {
+    var rawAttempt = sessionStorage.getItem('cw_attempt');
+    if (rawAttempt) {
+      sessionStorage.removeItem('cw_attempt');
+      var parsed = JSON.parse(rawAttempt);
+      if (parsed && parsed.cardHash === getCardHash()) {
+        attemptSnapshot = parsed;
+      }
+    }
+  } catch (err) {}
+
+  if (attemptSnapshot) {
+    // 5A. Render user attempt on the passage tokens with feedback classes:
+    // - correct picks (.is-correct)
+    // - incorrect picks (.is-incorrect)
+    // - missed targets (.is-missed)
+    var selMap = {};
+    var selIndices = attemptSnapshot.selectedIndices || [];
+    for (var s = 0; s < selIndices.length; s++) {
+      selMap[selIndices[s]] = true;
+    }
+
+    var correctCount = 0;
+    var incorrectCount = 0;
+
+    for (var j = 0; j < tokens.length; j++) {
+      var tok = tokens[j];
+      var userPicked = !!selMap[j];
+
+      if (userPicked && tok.isTarget) {
+        tok.el.classList.add('is-correct');
+        tok.el.setAttribute('title', 'Your pick: Correct target');
+        correctCount++;
+      } else if (userPicked && !tok.isTarget) {
+        tok.el.classList.add('is-incorrect');
+        tok.el.setAttribute('title', 'Your pick: Incorrect');
+        incorrectCount++;
+      } else if (!userPicked && tok.isTarget) {
+        tok.el.classList.add('is-missed');
+        tok.el.setAttribute('title', 'Missed target');
+      }
+    }
+
+    var missedCount = Math.max(0, targetDefs.length - correctCount);
+
+    // Render short summary card
+    if (attemptBox) {
+      var pct = targetDefs.length > 0 ? Math.round((correctCount / targetDefs.length) * 100) : 0;
+      var html = '<div class="cw-summary-card">';
+      html += '<div class="cw-summary-header">';
+      html += '<span class="cw-summary-title">Your Attempt</span>';
+      html += '<span class="cw-summary-score">' + correctCount + ' / ' + targetDefs.length + ' (' + pct + '%)</span>';
+      html += '</div>';
+      html += '<div class="cw-summary-text">';
+      html += '<span class="cw-stat cw-stat-correct">' + correctCount + ' correct</span>';
+      html += '<span class="cw-stat-dot">·</span>';
+      html += '<span class="cw-stat cw-stat-incorrect">' + incorrectCount + ' incorrect</span>';
+      html += '<span class="cw-stat-dot">·</span>';
+      html += '<span class="cw-stat cw-stat-missed">' + missedCount + ' missed</span>';
+      html += '</div>';
+      html += '</div>';
+
+      attemptBox.innerHTML = html;
+      attemptBox.style.display = 'block';
+    }
+  } else {
+    // 5B. Fallback if sessionStorage is empty (e.g. mobile edge case, or no front attempt):
+    // Highlight answer key targets only; do not crash
+    for (var j = 0; j < tokens.length; j++) {
+      if (tokens[j].isTarget) {
+        tokens[j].el.classList.add('is-target');
+        tokens[j].el.setAttribute('title', 'Target word');
+      }
+    }
+  }
+})();
+</script>
