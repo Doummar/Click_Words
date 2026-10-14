@@ -1,33 +1,46 @@
 # Click Words
 
-Click Words is a clean, interactive word-clicking exercise note type and add-on for Anki.
-Works on Anki Desktop, AnkiWeb, AnkiMobile (iOS), and AnkiDroid (Android).
+**Click Words** is an interactive Anki add-on for practicing word recognition in context. Read a passage, click the words that match the instruction, and check your answers instantly.
 
-## User Flow
-1. Read the Instruction (e.g. "Click on all adjectives").
-2. Read the Passage.
-3. Click target words directly within the text.
-4. Click Check to see instant visual evaluation (correct, incorrect, missed).
-5. Flip to the back to inspect the official answer key, explanation, and your attempt score.
+It is designed for grammar practice, language learning, and reading exercises.
+
+## How It Works
+
+1. Read the instruction, such as *"Click on all adjectives."*
+2. Read the passage.
+3. Click the words that match the instruction.
+4. Select **Check** to see correct, incorrect, and missed answers.
+5. Flip the card to review the answer key, explanation, and your score.
 
 ## Note Type Fields
-- **Instruction** (required): Task prompt shown on the card.
-- **Passage** (required): Full reading text containing target words.
-- **TargetWords** (required): Target words separated by `|` (pipe). Example: `dead|dead|stingy|heartless`. Duplicates and attached punctuation are supported; matching runs in passage order.
-- **ExerciseType** (optional): Metadata category label (e.g. "Adjective Forms").
-- **Explanation** (optional): Grammar or contextual notes displayed on the back of the card.
-- **Front Audio** (optional): Anki `[sound:...]` replay button on front.
-- **Back Audio** (optional): Anki `[sound:...]` replay button on back.
-- **Source** (optional): Reference text or citation.
-- **Extra** (optional): Additional supplementary notes.
 
-## Mobile and AnkiWeb Support
-The interactive engine is embedded directly inside the card template (HTML, CSS, JavaScript). The cards run on mobile devices (AnkiMobile, AnkiDroid) and AnkiWeb even without the desktop add-on installed.
+| Field | Description |
+|---|---|
+| **Instruction** | The task or question shown on the card. |
+| **Passage** | The text containing the words to identify. |
+| **TargetWords** | Correct answers separated by `\|` (pipe). For example: `dead\|stingy\|heartless`. Repeated words and punctuation are supported. |
+| **ExerciseType** | Optional category, such as `Adjective Forms`. |
+| **Explanation** | Optional explanation or grammar notes shown on the back. |
+| **Front Audio** | Optional audio replay button on the front. |
+| **Back Audio** | Optional audio replay button on the back. |
+| **Source** | Optional source or reference. |
+| **Extra** | Optional supplementary information. |
 
-## Add-on Features (Desktop)
-- Automatically creates and configures the "Click Words" note type on first profile open.
-- Safe template updates: card templates are never overwritten during regular review or settings save.
-- **Restore Templates**: Available in **Tools > Click Words** to restore Front, Back, and Styling templates directly from the add-on package.
+## Platform Support
+
+The interactive exercise is built into the card templates using HTML, CSS, and JavaScript. This allows the cards to run without the desktop add-on being installed on the reviewing device, provided the platform supports the required template functionality.
+
+- Anki Desktop
+- AnkiWeb
+- AnkiMobile (iOS)
+- AnkiDroid (Android)
+
+## Desktop Add-on Features
+
+- Automatically creates and configures the **Click Words** note type when a profile is opened for the first time.
+- Keeps existing card templates intact during normal reviews and settings saves.
+- Provides **Restore Templates** under **Tools → Click Words** to restore the default Front, Back, and Styling templates from the add-on package.
 
 ## License
+
 MIT License. Copyright (c) 2026 Adel Aitah.
