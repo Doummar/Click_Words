@@ -43,4 +43,4 @@ The interactive exercise is built into the card templates using HTML, CSS, and J
 
 ## License
 
-MIT License. Copyright (c) 2026 Adel Aitah.
+MIT License. Copyright (c) 2026
